@@ -29,6 +29,8 @@
 #include "Camera.h"
 #include "Util.h"
 
+#include "WorldObject.h"
+
 class World{
 private:
 	int width;
