@@ -37,7 +37,7 @@ private:
 	int height;
 	int num_objects;
 
-	int total_verts;
+	int total_verts = 0;
 	float* modelData;
 
 	//modelData indices
