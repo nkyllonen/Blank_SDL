@@ -1,8 +1,5 @@
 #include "World.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
-
 using namespace std;
 
 //HELPER FUNCTION DECLARATIONS
@@ -152,7 +149,7 @@ bool World::setupGraphics()
 	glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(normAttrib);
 
-	glBindVertexArray(0); //Unbind the model_vao in case we want to create a new one
+	glBindVertexArray(0); //Unbind the vao in case we want to create a new one
 
 	/////////////////////////////////
 	//BUILD OBJ VAO
@@ -165,9 +162,11 @@ bool World::setupGraphics()
 	/////////////////////////////////
 	/*glGenBuffers(2, obj_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, obj_vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, )
+	glBufferData(GL_ARRAY_BUFFER, )*/
 
-	glEnable(GL_DEPTH_TEST);*/
+
+	glBindVertexArray(0);
+	glEnable(GL_DEPTH_TEST);
 	return true;
 }
 

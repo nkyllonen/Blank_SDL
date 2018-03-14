@@ -31,7 +31,9 @@
 #include "WorldObject.h"
 
 #include "timerutil.h"
-#include "tiny_obj_loader_types.h"
+
+//#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
 
 class World{
 private:
@@ -45,6 +47,8 @@ private:
 	int CUBE_VERTS = 0;
 	int SPHERE_START = 0;
 	int SPHERE_VERTS = 0;
+
+	//OBJ data
 
 	//VAO and VBO GLuints
 	GLuint model_vao;
