@@ -18,11 +18,10 @@ World::World()
 	height = 0;
 }
 
-World::World(int w, int h, int num)
+World::World(int w, int h)
 {
 	width = w;
 	height = h;
-	num_objects = num;
 }
 
 World::~World()
@@ -34,17 +33,6 @@ World::~World()
 /*----------------------------*/
 // SETTERS
 /*----------------------------*/
-void World::setCubeIndices(int start, int tris)
-{
-	CUBE_START = start;
-	CUBE_VERTS = tris;
-}
-
-void World::setSphereIndices(int start, int tris)
-{
-	SPHERE_START = start;
-	SPHERE_VERTS = tris;
-}
 
 /*----------------------------*/
 // GETTERS
@@ -69,18 +57,20 @@ bool World::loadModelData()
 	//LOAD IN MODELS
 	/////////////////////////////////
 	//CUBE
-	int CUBE_VERTS = 0;
+	CUBE_START = 0;
+	CUBE_VERTS = 0;
 	float* cubeData = util::loadModel("models/cube.txt", CUBE_VERTS);
 	cout << "\nNumber of vertices in cube model : " << CUBE_VERTS << endl;
-	total_verts += CUBE_VERTS;
-	setCubeIndices(0, CUBE_VERTS);
+	cout << "--------------------------------------------------" << endl;
+	total_model_verts += CUBE_VERTS;
 
 	//SPHERE
-	int SPHERE_VERTS = 0;
+	SPHERE_START = CUBE_VERTS;
+	SPHERE_VERTS = 0;
 	float* sphereData = util::loadModel("models/sphere.txt", SPHERE_VERTS);
 	cout << "\nNumber of vertices in sphere model : " << SPHERE_VERTS << endl;
-	total_verts += SPHERE_VERTS;
-	setSphereIndices(CUBE_VERTS, SPHERE_VERTS);
+	cout << "--------------------------------------------------" << endl;
+	total_model_verts += SPHERE_VERTS;
 
 	/////////////////////////////////
 	//BUILD MODELDATA ARRAY
@@ -91,7 +81,7 @@ bool World::loadModelData()
 		delete[] sphereData;
 		return false;
 	}
-	modelData = new float[total_verts * 8];
+	modelData = new float[total_model_verts * 8];
 	//copy data into modelData array
 	copy(cubeData, cubeData + CUBE_VERTS * 8, modelData);
 	copy(sphereData, sphereData + SPHERE_VERTS * 8, modelData + (CUBE_VERTS * 8));
@@ -111,8 +101,7 @@ bool World::loadModelData()
 	}
 
 	cout << "\nOBJ loaded successfully" << endl;
-
-
+	cout << "--------------------------------------------------" << endl;
 	return true;
 }
 
@@ -120,19 +109,19 @@ bool World::loadModelData()
 bool World::setupGraphics()
 {
 	/////////////////////////////////
-	//BUILD VERTEX ARRAY OBJECT
+	//BUILD MODEL VAO
 	/////////////////////////////////
 	//This stores the VBO and attribute mappings in one object
 	glGenVertexArrays(1, &model_vao); //Create a model_vao
 	glBindVertexArray(model_vao); //Bind the above created model_vao to the current context
 
 	/////////////////////////////////
-	//BUILD VERTEX BUFFER OBJECT
+	//BUILD MODEL VBO
 	/////////////////////////////////
 	//Allocate memory on the graphics card to store geometry (vertex buffer object)
 	glGenBuffers(1, model_vbo);  //Create 1 buffer called model_vbo
 	glBindBuffer(GL_ARRAY_BUFFER, model_vbo[0]); //Set the model_vbo as the active array buffer (Only one buffer can be active at a time)
-	glBufferData(GL_ARRAY_BUFFER, total_verts * 8 * sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to model_vbo
+	glBufferData(GL_ARRAY_BUFFER, total_model_verts * 8 * sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to model_vbo
 
 	/////////////////////////////////
 	//SETUP SHADERS
@@ -150,24 +139,35 @@ bool World::setupGraphics()
 		return false;
 	}
 
-	//Tell OpenGL how to set fragment shader input
+	//Tell OpenGL how to set shader input (how the data in the VBO is organized)
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
-	//Attribute, vals/attrib., type, normalized?, stride, offset
-	//Binds to VBO current GL_ARRAY_BUFFER
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0); //Attribute, vals/attrib., type, normalized?, stride, offset
 	glEnableVertexAttribArray(posAttrib);
-
-	GLint normAttrib = glGetAttribLocation(shaderProgram, "inNormal");
-	glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-	glEnableVertexAttribArray(normAttrib);
 
 	GLint texAttrib = glGetAttribLocation(shaderProgram, "inTexcoord");
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
+	GLint normAttrib = glGetAttribLocation(shaderProgram, "inNormal");
+	glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(normAttrib);
+
 	glBindVertexArray(0); //Unbind the model_vao in case we want to create a new one
 
-	glEnable(GL_DEPTH_TEST);
+	/////////////////////////////////
+	//BUILD OBJ VAO
+	/////////////////////////////////
+	glGenVertexArrays(1, &obj_vao);
+	glBindVertexArray(obj_vao);
+
+	/////////////////////////////////
+	//BUILD OBJ VBOs
+	/////////////////////////////////
+	/*glGenBuffers(2, obj_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, obj_vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, )
+
+	glEnable(GL_DEPTH_TEST);*/
 	return true;
 }
 
@@ -220,7 +220,7 @@ void World::draw(Camera * cam)
 static bool TinyOBJLoad(const char* filename, const char* basepath, tinyobj::attrib_t &attrib,
 												vector<tinyobj::shape_t> &shapes, vector<tinyobj::material_t> &materials)
 {
-  cout << "\nLoading " << filename << endl;
+  cout << "\nLoading " << filename << "......"<< endl;
 
   timerutil t;
   t.start();

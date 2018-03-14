@@ -31,17 +31,16 @@
 #include "WorldObject.h"
 
 #include "timerutil.h"
+#include "tiny_obj_loader_types.h"
 
 class World{
 private:
 	int width;
 	int height;
-	int num_objects;
 
-	int total_verts = 0;
+	//modelData
+	int total_model_verts = 0;
 	float* modelData;
-
-	//modelData indices
 	int CUBE_START = 0;
 	int CUBE_VERTS = 0;
 	int SPHERE_START = 0;
@@ -49,9 +48,9 @@ private:
 
 	//VAO and VBO GLuints
 	GLuint model_vao;
-	GLuint model_vbo[1];
+	GLuint model_vbo[1];	//interleaved vert pos, tex, norm
 	GLuint obj_vao;
-	GLuint obj_vbo[1];
+	GLuint obj_vbo[2];		//vertices and normals
 
 	//Shader and Texture GLuints
 	GLuint shaderProgram;
@@ -64,12 +63,10 @@ private:
 public:
 	//CONSTRUCTORS AND DESTRUCTORS
 	World();
-	World(int w, int h, int num);
+	World(int w, int h);
 	~World();
 
 	//SETTERS
-	void setCubeIndices(int start, int tris);
-	void setSphereIndices(int start, int tris);
 
 	//GETTERS
 	int getWidth();
