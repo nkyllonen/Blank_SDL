@@ -1,7 +1,13 @@
 #include "World.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
 using namespace std;
 
+//HELPER FUNCTION DECLARATIONS
+static bool TinyOBJLoad(const char* filename, const char* basepath, tinyobj::attrib_t &attrib,
+												vector<tinyobj::shape_t> &shapes, vector<tinyobj::material_t> &materials);
 
 /*----------------------------*/
 // CONSTRUCTORS AND DESTRUCTORS
@@ -91,6 +97,22 @@ bool World::loadModelData()
 	copy(sphereData, sphereData + SPHERE_VERTS * 8, modelData + (CUBE_VERTS * 8));
 	delete[] cubeData;
 	delete[] sphereData;
+
+	/////////////////////////////////
+	//LOAD IN OBJ
+	/////////////////////////////////
+	tinyobj::attrib_t obj_attrib;
+	vector<tinyobj::shape_t> obj_shapes;
+	vector<tinyobj::material_t> obj_materials;
+
+	if (!TinyOBJLoad("models/cylinder.obj", "models/", obj_attrib, obj_shapes, obj_materials))
+	{
+		return false;
+	}
+
+	cout << "\nOBJ loaded successfully" << endl;
+
+
 	return true;
 }
 
@@ -101,16 +123,16 @@ bool World::setupGraphics()
 	//BUILD VERTEX ARRAY OBJECT
 	/////////////////////////////////
 	//This stores the VBO and attribute mappings in one object
-	glGenVertexArrays(1, &vao); //Create a VAO
-	glBindVertexArray(vao); //Bind the above created VAO to the current context
+	glGenVertexArrays(1, &model_vao); //Create a model_vao
+	glBindVertexArray(model_vao); //Bind the above created model_vao to the current context
 
 	/////////////////////////////////
 	//BUILD VERTEX BUFFER OBJECT
 	/////////////////////////////////
 	//Allocate memory on the graphics card to store geometry (vertex buffer object)
-	glGenBuffers(1, vbo);  //Create 1 buffer called vbo
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
-	glBufferData(GL_ARRAY_BUFFER, total_verts * 8 * sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to vbo
+	glGenBuffers(1, model_vbo);  //Create 1 buffer called model_vbo
+	glBindBuffer(GL_ARRAY_BUFFER, model_vbo[0]); //Set the model_vbo as the active array buffer (Only one buffer can be active at a time)
+	glBufferData(GL_ARRAY_BUFFER, total_verts * 8 * sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to model_vbo
 
 	/////////////////////////////////
 	//SETUP SHADERS
@@ -143,7 +165,7 @@ bool World::setupGraphics()
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
-	glBindVertexArray(0); //Unbind the VAO in case we want to create a new one
+	glBindVertexArray(0); //Unbind the model_vao in case we want to create a new one
 
 	glEnable(GL_DEPTH_TEST);
 	return true;
@@ -182,18 +204,46 @@ void World::draw(Camera * cam)
 	glBindTexture(GL_TEXTURE_2D, tex1);
 	glUniform1i(glGetUniformLocation(shaderProgram, "tex1"), 1);
 
-	glBindVertexArray(vao);
+	glBindVertexArray(model_vao);
+	glUniform1i(uniTexID, -1);
 
-	/*for (int i = 0; i < width*height; i++)
-	{
-			glUniform1i(uniTexID, 0); //Set texture ID to use (0 = wood texture)
-			objects_array[i]->draw(cam, shaderProgram);
-	}//END for loop
 
-	glUniform1i(uniTexID, 1); //Set texture ID to use for floor (1 = brick texture)
-	floor->draw(cam, shaderProgram);*/
 }
 
 /*----------------------------*/
 // PRIVATE FUNCTIONS
 /*----------------------------*/
+
+/*----------------------------*/
+// HELPER FUNCTIONS
+/*----------------------------*/
+static bool TinyOBJLoad(const char* filename, const char* basepath, tinyobj::attrib_t &attrib,
+												vector<tinyobj::shape_t> &shapes, vector<tinyobj::material_t> &materials)
+{
+  cout << "\nLoading " << filename << endl;
+
+  timerutil t;
+  t.start();
+  std::string err;
+  bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename,
+                              basepath, true);
+  t.end();
+  printf("Parsing time: %lu [msecs]\n", t.msec());
+
+  if (!err.empty()) {
+    cerr << err << endl;
+  }
+
+  if (!ret) {
+    printf("Failed to load/parse .obj.\n");
+    return false;
+  }
+
+	printf("# of vertices  = %d\n", (int)(attrib.vertices.size()) / 3);
+  printf("# of normals   = %d\n", (int)(attrib.normals.size()) / 3);
+  printf("# of texcoords = %d\n", (int)(attrib.texcoords.size()) / 2);
+  printf("# of materials = %d\n", (int)materials.size());
+  printf("# of shapes    = %d\n", (int)shapes.size());
+
+  return true;
+}

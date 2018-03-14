@@ -28,8 +28,9 @@
 #include "Vec3D.h"
 #include "Camera.h"
 #include "Util.h"
-
 #include "WorldObject.h"
+
+#include "timerutil.h"
 
 class World{
 private:
@@ -47,13 +48,18 @@ private:
 	int SPHERE_VERTS = 0;
 
 	//VAO and VBO GLuints
-	GLuint vao;
-	GLuint vbo[1];
+	GLuint model_vao;
+	GLuint model_vbo[1];
+	GLuint obj_vao;
+	GLuint obj_vbo[1];
 
 	//Shader and Texture GLuints
 	GLuint shaderProgram;
 	GLuint tex0;
 	GLuint tex1;
+
+	//PRIVATE FUNCTIONS
+
 
 public:
 	//CONSTRUCTORS AND DESTRUCTORS

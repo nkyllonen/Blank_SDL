@@ -54,9 +54,6 @@ const float step_size = 0.15f;
 /*=============================*/
 // Helper Functions
 /*=============================*/
-/*=============================*/
-// Helper Functions
-/*=============================*/
 void onKeyDown(SDL_KeyboardEvent & event, Camera* cam, World* myWorld);
 void mouseMove(SDL_MouseMotionEvent & event, Camera * player, float horizontal_angle, float vertical_angle);
 
