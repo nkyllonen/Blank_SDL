@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	/////////////////////////////////
 	Camera* cam = new Camera();
 	cam->setDir(Vec3D(0, 0, -1));					//look along -z
-	cam->setPos(Vec3D(0, 0, 10));				//start
+	cam->setPos(Vec3D(0, 0, 10));					//start back along +z
 	cam->setUp(Vec3D(0, 1, 0));						//map is in xz plane
 	cam->setRight(Vec3D(1, 0, 0));				//look along -z
 

@@ -31,8 +31,6 @@
 #include "WorldObject.h"
 
 #include "timerutil.h"
-
-//#define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
 class World{
@@ -49,15 +47,18 @@ private:
 	int SPHERE_VERTS = 0;
 
 	//OBJ data
+	tinyobj::attrib_t obj_attrib;
+	vector<tinyobj::shape_t> obj_shapes;
+	vector<tinyobj::material_t> obj_materials;
 
 	//VAO and VBO GLuints
 	GLuint model_vao;
 	GLuint model_vbo[1];	//interleaved vert pos, tex, norm
 	GLuint obj_vao;
-	GLuint obj_vbo[2];		//vertices and normals
+	GLuint obj_vbos[3];		//vertices, normals, texcoords
 
 	//Shader and Texture GLuints
-	GLuint shaderProgram;
+	GLuint phongProgram;
 	GLuint tex0;
 	GLuint tex1;
 

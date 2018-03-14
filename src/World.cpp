@@ -88,10 +88,6 @@ bool World::loadModelData()
 	/////////////////////////////////
 	//LOAD IN OBJ
 	/////////////////////////////////
-	tinyobj::attrib_t obj_attrib;
-	vector<tinyobj::shape_t> obj_shapes;
-	vector<tinyobj::material_t> obj_materials;
-
 	if (!TinyOBJLoad("models/cylinder.obj", "models/", obj_attrib, obj_shapes, obj_materials))
 	{
 		return false;
@@ -123,13 +119,13 @@ bool World::setupGraphics()
 	/////////////////////////////////
 	//SETUP SHADERS
 	/////////////////////////////////
-	shaderProgram = util::LoadShader("Shaders/phongTex.vert", "Shaders/phongTex.frag");
+	phongProgram = util::LoadShader("Shaders/phongTex.vert", "Shaders/phongTex.frag");
 
 	//load in textures
 	tex0 = util::LoadTexture("textures/wood.bmp");
 	tex1 = util::LoadTexture("textures/grey_stones.bmp");
 
-	if (tex0 == -1 || tex1 == -1 || shaderProgram == -1)
+	if (tex0 == -1 || tex1 == -1 || phongProgram == -1)
 	{
 		cout << "\nCan't load texture(s)" << endl;
 		printf(strerror(errno));
@@ -137,15 +133,15 @@ bool World::setupGraphics()
 	}
 
 	//Tell OpenGL how to set shader input (how the data in the VBO is organized)
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	GLint posAttrib = glGetAttribLocation(phongProgram, "position");
 	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0); //Attribute, vals/attrib., type, normalized?, stride, offset
 	glEnableVertexAttribArray(posAttrib);
 
-	GLint texAttrib = glGetAttribLocation(shaderProgram, "inTexcoord");
+	GLint texAttrib = glGetAttribLocation(phongProgram, "inTexcoord");
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
-	GLint normAttrib = glGetAttribLocation(shaderProgram, "inNormal");
+	GLint normAttrib = glGetAttribLocation(phongProgram, "inNormal");
 	glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(normAttrib);
 
@@ -160,10 +156,34 @@ bool World::setupGraphics()
 	/////////////////////////////////
 	//BUILD OBJ VBOs
 	/////////////////////////////////
-	/*glGenBuffers(2, obj_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, obj_vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, )*/
+	glGenBuffers(3, obj_vbos);
 
+	//1.1 POSITIONS --> obj_vbos[0]
+	glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[0]);
+	glBufferData(GL_ARRAY_BUFFER, obj_attrib.vertices.size() * sizeof(float), &obj_attrib.vertices.at(0), GL_STATIC_DRAW);
+
+	//1.2 setup position attributes --> need to set now while obj_vbos[0] is bound
+	GLint obj_posAttrib = glGetAttribLocation(phongProgram, "position");
+	glVertexAttribPointer(obj_posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+	glEnableVertexAttribArray(obj_posAttrib);
+
+	//2.1 NORMALS --> obj_vbos[1]
+	glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[1]);
+	glBufferData(GL_ARRAY_BUFFER, obj_attrib.normals.size() * sizeof(float), &obj_attrib.normals.at(0), GL_STATIC_DRAW);
+
+	//2.2 setup normal attributes
+	GLint obj_normAttrib = glGetAttribLocation(phongProgram, "inNormal");
+	glVertexAttribPointer(obj_normAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+	glEnableVertexAttribArray(obj_normAttrib);
+
+	//3.1 TEXCOORDS --> obj_vbos[2]
+	glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[2]);
+	glBufferData(GL_ARRAY_BUFFER, obj_attrib.texcoords.size() * sizeof(float), &obj_attrib.texcoords.at(0), GL_STATIC_DRAW);
+
+	//3.2 setup texcoord attributes
+	GLint obj_texAttrib = glGetAttribLocation(phongProgram, "inTexcoord");
+	glVertexAttribPointer(obj_texAttrib, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+	glEnableVertexAttribArray(obj_texAttrib);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
@@ -177,12 +197,12 @@ void World::draw(Camera * cam)
 	glClearColor(.2f, 0.4f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(shaderProgram); //Set the active shader (only one can be used at a time)
+	glUseProgram(phongProgram); //Set the active shader (only one can be used at a time)
 
 	//vertex shader uniforms
-	GLint uniView = glGetUniformLocation(shaderProgram, "view");
-	GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
-	GLint uniTexID = glGetUniformLocation(shaderProgram, "texID");
+	GLint uniView = glGetUniformLocation(phongProgram, "view");
+	GLint uniProj = glGetUniformLocation(phongProgram, "proj");
+	GLint uniTexID = glGetUniformLocation(phongProgram, "texID");
 
 	//build view matrix from Camera
 	glm::mat4 view = glm::lookAt(
@@ -197,11 +217,11 @@ void World::draw(Camera * cam)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex0);
-	glUniform1i(glGetUniformLocation(shaderProgram, "tex0"), 0);
+	glUniform1i(glGetUniformLocation(phongProgram, "tex0"), 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
-	glUniform1i(glGetUniformLocation(shaderProgram, "tex1"), 1);
+	glUniform1i(glGetUniformLocation(phongProgram, "tex1"), 1);
 
 	glBindVertexArray(model_vao);
 	glUniform1i(uniTexID, -1);
