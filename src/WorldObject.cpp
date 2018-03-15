@@ -148,5 +148,6 @@ void WorldObject::draw(GLuint shaderProgram)
 
 	//starts at an offset of start_vertex_index
 	//(Primitive Type, Start Vertex, End Vertex)
-	glDrawArrays(GL_TRIANGLES, start_vertex_index, total_vertices);
+	if (hasIBO) glDrawArrays(GL_TRIANGLE_STRIP, start_vertex_index, total_vertices);
+	else glDrawArrays(GL_TRIANGLES, start_vertex_index, total_vertices);
 }

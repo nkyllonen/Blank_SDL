@@ -24,7 +24,30 @@ World::World(int w, int h)
 World::~World()
 {
 	delete[] modelData;
-	//delete floor;
+	delete floor;
+	delete obj;
+}
+
+void World::init()
+{
+	//initialize floor
+	floor = new WorldObject(Vec3D(0,-0.5*height - 2, 0));
+	floor->setVertexInfo(CUBE_START, CUBE_VERTS);
+
+	Material mat = Material();
+	mat.setAmbient(glm::vec3(0.7, 0.7, 0.7));
+	mat.setDiffuse(glm::vec3(0.7, 0.7, 0.7));
+	mat.setSpecular(glm::vec3(0, 0, 0));
+
+	floor->setMaterial(mat);
+	floor->setSize(Vec3D(width*5, 0.1, width)); //xz plane
+
+	//initialize obj cylinder
+	obj = new WorldObject(Vec3D(0,-3,0));
+	obj->setVertexInfo(0, total_obj_triangles);
+	obj->setMaterial(mat);
+	obj->setSize(Vec3D(1,1,1));
+	obj->hasIBO = true;
 }
 
 /*----------------------------*/
@@ -93,6 +116,7 @@ bool World::loadModelData()
 		return false;
 	}
 
+	total_obj_triangles = (int)obj_attrib.vertices.size() / 3;
 	cout << "\nOBJ loaded successfully" << endl;
 	cout << "--------------------------------------------------" << endl;
 	return true;
@@ -154,7 +178,7 @@ bool World::setupGraphics()
 	glBindVertexArray(obj_vao);
 
 	/////////////////////////////////
-	//BUILD OBJ VBOs
+	//BUILD OBJ VBOs + IBO
 	/////////////////////////////////
 	glGenBuffers(3, obj_vbos);
 
@@ -168,6 +192,17 @@ bool World::setupGraphics()
 	glEnableVertexAttribArray(obj_posAttrib);
 
 	//2.1 NORMALS --> obj_vbos[1]
+	if (obj_attrib.normals.size() == 0)
+	{
+		//fill with (0,0,0) normal vectors
+		for (int i = 0; i < total_obj_triangles*3; i++)	//same number of normals as vertices
+		{
+			obj_attrib.normals.push_back(0);
+			obj_attrib.normals.push_back(0);
+			obj_attrib.normals.push_back(0);
+		}
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[1]);
 	glBufferData(GL_ARRAY_BUFFER, obj_attrib.normals.size() * sizeof(float), &obj_attrib.normals.at(0), GL_STATIC_DRAW);
 
@@ -177,6 +212,16 @@ bool World::setupGraphics()
 	glEnableVertexAttribArray(obj_normAttrib);
 
 	//3.1 TEXCOORDS --> obj_vbos[2]
+	if (obj_attrib.texcoords.size() == 0)
+	{
+		//fill with (-1, -1) text coords --> no texture
+		for (int i = 0; i < total_obj_triangles*3; i++)	//same number of texcoords as vertices
+		{
+			obj_attrib.texcoords.push_back(-1);
+			obj_attrib.texcoords.push_back(-1);
+		}
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[2]);
 	glBufferData(GL_ARRAY_BUFFER, obj_attrib.texcoords.size() * sizeof(float), &obj_attrib.texcoords.at(0), GL_STATIC_DRAW);
 
@@ -184,6 +229,11 @@ bool World::setupGraphics()
 	GLint obj_texAttrib = glGetAttribLocation(phongProgram, "inTexcoord");
 	glVertexAttribPointer(obj_texAttrib, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 	glEnableVertexAttribArray(obj_texAttrib);
+
+	//4. INDICES --> obj_ibo
+	glGenBuffers(1, obj_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj_ibo[0]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj_shapes.at(0).mesh.indices.size() * sizeof(int), &obj_shapes.at(0).mesh.indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
@@ -224,9 +274,17 @@ void World::draw(Camera * cam)
 	glUniform1i(glGetUniformLocation(phongProgram, "tex1"), 1);
 
 	glBindVertexArray(model_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, model_vbo[0]); //Set the model_vbo as the active VBO
+	glUniform1i(uniTexID, 1);
+
+	floor->draw(phongProgram);
+
+	//draw obj cylinder
+	glBindVertexArray(obj_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj_ibo[0]);
 	glUniform1i(uniTexID, -1);
 
-
+	obj->draw(phongProgram);
 }
 
 /*----------------------------*/
@@ -263,6 +321,12 @@ static bool TinyOBJLoad(const char* filename, const char* basepath, tinyobj::att
   printf("# of texcoords = %d\n", (int)(attrib.texcoords.size()) / 2);
   printf("# of materials = %d\n", (int)materials.size());
   printf("# of shapes    = %d\n", (int)shapes.size());
+
+	for (int s = 0; s < shapes.size(); s++)
+	{
+		printf("-->shapes[%i] : %s\n", s, shapes.at(s).name.c_str());
+		printf("----> # of indices = %d\n", (int)shapes.at(s).mesh.indices.size());
+	}
 
   return true;
 }

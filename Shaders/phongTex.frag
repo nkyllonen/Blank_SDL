@@ -27,7 +27,7 @@ void main()
 {
 	vec3 color;
 
-	if (texID == -1) //no texture
+	if (texID == -1 || texcoord == vec2(-1,-1)) //no texture
 			color = Color;
 	else if (texID == 0)
 		color = texture(tex0, texcoord).rgb;
@@ -38,7 +38,7 @@ void main()
 		outColor = vec4(1,0,0,1);
    	 	return; //This was an error, stop lighting!
 	}
-	
+
 	vec3 diffuseC = color*kd*max(dot(-lightDir, normal), 0);
 	vec3 ambC = color*ka;
 
@@ -47,7 +47,7 @@ void main()
 	vec3 reflectDir = reflect(-lightDir, normal);
 	vec3 viewDir = normalize(-pos);
 	float spec = max(dot(h, normal),0.0);
-	
+
 	if (dot(-lightDir,normal) <= 0.0) spec = 0;
 	vec3 specC = color*ks*pow(spec,s);
 

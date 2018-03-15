@@ -24,6 +24,9 @@ protected:
 	int total_vertices;	//total num of vertices within modelData array
 
 public:
+	//PUBLIC VARIABLES
+	bool hasIBO = false;
+
 	//CONSTRUCTORS AND DESTRUCTORS
 	WorldObject();
 	WorldObject(Vec3D init_pos);

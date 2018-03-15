@@ -47,6 +47,7 @@ private:
 	int SPHERE_VERTS = 0;
 
 	//OBJ data
+	int total_obj_triangles = 0;
 	tinyobj::attrib_t obj_attrib;
 	vector<tinyobj::shape_t> obj_shapes;
 	vector<tinyobj::material_t> obj_materials;
@@ -56,20 +57,23 @@ private:
 	GLuint model_vbo[1];	//interleaved vert pos, tex, norm
 	GLuint obj_vao;
 	GLuint obj_vbos[3];		//vertices, normals, texcoords
+	GLuint obj_ibo[1];
 
 	//Shader and Texture GLuints
 	GLuint phongProgram;
 	GLuint tex0;
 	GLuint tex1;
 
-	//PRIVATE FUNCTIONS
-
+	//objects in World
+	WorldObject* floor;
+	WorldObject* obj;
 
 public:
 	//CONSTRUCTORS AND DESTRUCTORS
 	World();
 	World(int w, int h);
 	~World();
+	void init();
 
 	//SETTERS
 

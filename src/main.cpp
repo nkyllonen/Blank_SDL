@@ -61,6 +61,16 @@ void mouseMove(SDL_MouseMotionEvent & event, Camera * player, float horizontal_a
 //							  MAIN
 /*==============================================================*/
 int main(int argc, char *argv[]) {
+	//CHECK FOR WIDTH AND HEIGHT VALUES
+	if (argc != 3)
+	{
+		cout << "\nERROR: Incorrect usage. Expected ./a.out WIDTH HEIGHT\n";
+		exit(0);
+	}
+
+	int w = atoi(argv[1]);
+	int h = atoi(argv[2]);
+
 	/////////////////////////////////
 	//INITIALIZE SDL WINDOW
 	/////////////////////////////////
@@ -75,7 +85,7 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 
-	World* myWorld = new World();
+	World* myWorld = new World(w, h);
 
 	/////////////////////////////////
 	//LOAD MODEL DATA INTO WORLD
@@ -116,6 +126,8 @@ int main(int argc, char *argv[]) {
 		myWorld->~World();
 		cam->~Camera();
 	}
+
+	myWorld->init();
 
 	/*===========================================================================================
 	* EVENT LOOP (Loop forever processing each event as fast as possible)
