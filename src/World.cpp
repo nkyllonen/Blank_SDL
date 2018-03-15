@@ -81,7 +81,6 @@ bool World::loadModelData()
 	CUBE_VERTS = 0;
 	float* cubeData = util::loadModel("models/cube.txt", CUBE_VERTS);
 	cout << "\nNumber of vertices in cube model : " << CUBE_VERTS << endl;
-	cout << "--------------------------------------------------" << endl;
 	total_model_verts += CUBE_VERTS;
 
 	//SPHERE
@@ -89,7 +88,6 @@ bool World::loadModelData()
 	SPHERE_VERTS = 0;
 	float* sphereData = util::loadModel("models/sphere.txt", SPHERE_VERTS);
 	cout << "\nNumber of vertices in sphere model : " << SPHERE_VERTS << endl;
-	cout << "--------------------------------------------------" << endl;
 	total_model_verts += SPHERE_VERTS;
 
 	/////////////////////////////////
@@ -237,6 +235,11 @@ bool World::setupGraphics()
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
+
+	cout << "--------------------------------------------------" << endl;
+	cout << "--------------GRAPHICS SETUP COMPLETE-------------" << endl;
+	cout << "--------------------------------------------------" << endl;
+
 	return true;
 }
 
@@ -297,7 +300,8 @@ void World::draw(Camera * cam)
 static bool TinyOBJLoad(const char* filename, const char* basepath, tinyobj::attrib_t &attrib,
 												vector<tinyobj::shape_t> &shapes, vector<tinyobj::material_t> &materials)
 {
-  cout << "\nLoading " << filename << "......"<< endl;
+	cout << "--------------------------------------------------" << endl;
+  cout << "Loading " << filename << "......"<< endl;
 
   timerutil t;
   t.start();

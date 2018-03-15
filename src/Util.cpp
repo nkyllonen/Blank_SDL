@@ -59,7 +59,8 @@ float* util::loadModel(string filename, int& num_verts)
 		modelFile >> m_array[i];
 	}
 
-	cout << "\nLoaded model file " << filename << " successfully." << endl;
+	cout << "--------------------------------------------------" << endl;
+	cout << "Loaded model file " << filename << " successfully." << endl;
 
 	printf("Lines : %d\n", numLines);
 	num_verts = numLines / 8;
